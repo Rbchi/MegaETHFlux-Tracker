@@ -632,23 +632,18 @@
   async function fetchData() {
     const btn = document.getElementById('refreshBtn');
     btn.disabled = true;
-    setStatus('loading', 'CALLING BLOCKSCOUT V2 API → ' + CONTRACT);
+    setStatus('loading', 'CALLING getTotalStakedAmount() → ' + CONTRACT);
 
     try {
       const resp = await fetch('/api/rpc', { method: 'POST' });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const json = await resp.json();
 
-      // Blockscout v2 query-read-method: { output: [{ type, value }] }
-      let raw;
-      if (json.output && json.output.length > 0) {
-        raw = json.output[0].value;
-      } else if (json.result) {
-        raw = json.result;
-      } else {
-        throw new Error('BAD RESPONSE: ' + JSON.stringify(json).slice(0, 80));
-      }
+      if (json.error) throw new Error(json.error.message || 'RPC ERROR');
+      const raw = json.result;
+      if (!raw || raw === '0x') throw new Error('EMPTY RESPONSE FROM CONTRACT');
 
+      // getTotalStakedAmount returns uint128 — decode as uint256 (padded)
       const bigVal  = BigInt(raw);
       const amount  = Number(bigVal / (10n ** 18n)) + Number(bigVal % (10n ** 18n)) / 1e18;
       const pctCirc  = (amount / CIRC)  * 100;
