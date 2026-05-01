@@ -6,20 +6,24 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   }
 
-  // Use Blockscout's eth_call proxy — open CORS, no IP whitelist
-  const url = `https://megaeth.blockscout.com/api?module=proxy&action=eth_call&to=0x42bfAAA203B8259270A1b5EF4576dB6b8359Daa1&data=0x88fe2be8&tag=latest`;
+  // Blockscout v2 — query-read-method
+  const url = 'https://megaeth.blockscout.com/api/v2/smart-contracts/0x42bfAAA203B8259270A1b5EF4576dB6b8359Daa1/query-read-method';
 
   try {
     const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-      },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        args: [],
+        method_id: '0x88fe2be8',
+        contract_type: 'regular'
+      }),
     });
 
     const text = await response.text();
@@ -33,10 +37,7 @@ export default async function handler(req) {
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
     });
   }
 }
