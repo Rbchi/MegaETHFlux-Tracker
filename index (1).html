@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEGA // FLUX TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1de98b;
+      --green-dim: rgba(29,233,139,0.08);
+      --green-border: rgba(29,233,139,0.3);
+      --bg: #0d0d0d;
+      --bg2: #111111;
+      --bg3: #161616;
+      --text: #e8e8e8;
+      --muted: #666;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: rgba(10,10,10,0.95);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-mega {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+    }
+
+    .logo-flux { color: var(--green); font-style: italic; }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.15em;
+    }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      border-left: 2px solid transparent;
+    }
+
+    .nav-item.active {
+      color: var(--text);
+      border-left-color: var(--green);
+      background: rgba(29,233,139,0.04);
+    }
+
+    .sidebar-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .commit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--green);
+      color: #000;
+      border: none;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+    }
+
+    .commit-btn:hover { opacity: 0.85; }
+
+    .audited {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 10px;
+      letter-spacing: 0.08em;
+    }
+
+    .audited-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      border: 1px solid var(--muted);
+    }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.6);
+    }
+
+    .topbar-path {
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+
+    .topbar-path span { color: var(--text); }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 2s infinite;
+    }
+
+    .status-dot.loading { background: #f5a623; }
+    .status-dot.error   { background: #e24b4a; animation: none; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .content { padding: 32px; flex: 1; }
+
+    /* frame with corner brackets */
+    .frame {
+      position: relative;
+      padding: 28px;
+      margin-bottom: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+    }
+
+    .frame::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 14px; height: 14px;
+      border-top: 2px solid var(--green);
+      border-left: 2px solid var(--green);
+    }
+
+    .frame::after {
+      content: '';
+      position: absolute;
+      top: -1px; right: -1px;
+      width: 14px; height: 14px;
+      border-top: 2px solid var(--green);
+      border-right: 2px solid var(--green);
+    }
+
+    .br1 {
+      position: absolute;
+      bottom: -1px; left: -1px;
+      width: 14px; height: 14px;
+      border-bottom: 2px solid var(--green);
+      border-left: 2px solid var(--green);
+    }
+
+    .br2 {
+      position: absolute;
+      bottom: -1px; right: -1px;
+      width: 14px; height: 14px;
+      border-bottom: 2px solid var(--green);
+      border-right: 2px solid var(--green);
+    }
+
+    .status-line {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-line::before { content: '›'; color: var(--green); }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .hero-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 56px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .hero-number .unit {
+      font-size: 28px;
+      color: var(--green);
+      margin-left: 6px;
+    }
+
+    .hero-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 8px;
+      letter-spacing: 0.08em;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 20px;
+      position: relative;
+    }
+
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 8px; height: 8px;
+      border-top: 1px solid var(--green);
+      border-left: 1px solid var(--green);
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--green); }
+
+    .stat-meta {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 0.06em;
+    }
+
+    .skel {
+      display: inline-block;
+      background: rgba(255,255,255,0.06);
+      animation: shimmer 1.5s infinite;
+      vertical-align: middle;
+      border-radius: 2px;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.9; }
+    }
+
+    /* segmented bar */
+    .bar-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .bar-section::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 10px; height: 10px;
+      border-top: 1px solid var(--green);
+      border-left: 1px solid var(--green);
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .bar-title {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .bar-pct {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .seg-track {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 10px;
+    }
+
+    .seg {
+      flex: 1;
+      height: 14px;
+      background: rgba(255,255,255,0.06);
+      transition: background 0.3s ease;
+    }
+
+    .seg.filled-green { background: var(--green); }
+    .seg.filled-blue  { background: #3b7bff; }
+
+    .bar-legend {
+      display: flex;
+      gap: 20px;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .legend-sq {
+      display: inline-block;
+      width: 8px; height: 8px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    /* contract info */
+    .info-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0 16px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+    }
+
+    .info-key {
+      color: var(--muted);
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+
+    .info-val {
+      color: rgba(255,255,255,0.5);
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      word-break: break-all;
+    }
+
+    .info-val.accent { color: var(--green); }
+
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      border-top: 1px solid var(--border);
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .refresh-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .refresh-btn:hover  { border-color: var(--green); color: var(--green); }
+    .refresh-btn:active { transform: scale(0.97); }
+    .refresh-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .hero-number { font-size: 40px; }
+      .content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mega">MEGA<span class="logo-flux">flux</span><sup style="font-size:10px;color:var(--muted);vertical-align:super;">®</sup></div>
+      <div class="logo-sub">KPI REWARDS // TRACKER</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="1" width="6" height="6"/><rect x="9" y="1" width="6" height="6"/>
+          <rect x="1" y="9" width="6" height="6"/><rect x="9" y="9" width="6" height="6"/>
+        </svg>
+        OVERVIEW
+      </div>
+      <div class="nav-item active">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="2,12 6,7 10,9 14,3"/>
+        </svg>
+        COMMIT TRACKER
+      </div>
+      <div class="nav-item">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>
+        </svg>
+        KPIS
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="commit-btn" onclick="window.open('https://flux.megaeth.com','_blank')">COMMIT MEGA</button>
+      <div class="audited">
+        <div class="audited-dot"></div>
+        SMART CONTRACT AUDITED
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-path">SYSTEM // <span>COMMIT TRACKER</span></div>
+      <div class="status-pill">
+        <div class="status-dot loading" id="statusDot"></div>
+        <span id="statusPillText">CONNECTING</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="status-line" id="statusLine">INITIALIZING RPC CONNECTION...</div>
+
+      <!-- Hero -->
+      <div class="frame">
+        <div class="br1"></div><div class="br2"></div>
+        <div class="hero-label">TOTAL $MEGA DEPOSITED IN FLUX</div>
+        <div class="hero-number" id="heroNumber">
+          <span class="skel" style="width:200px;height:52px;display:inline-block;"></span>
+        </div>
+        <div class="hero-sub" id="heroSub">FETCHING FROM CONTRACT...</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">% OF CIRCULATING SUPPLY</div>
+          <div class="stat-value green" id="pctCirc"><span class="skel" style="width:70px;height:28px;"></span></div>
+          <div class="stat-meta">1,130,000,000 CIRC.</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">% OF TOTAL SUPPLY</div>
+          <div class="stat-value" id="pctTotal"><span class="skel" style="width:70px;height:28px;"></span></div>
+          <div class="stat-meta">10,000,000,000 TOTAL</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">RAW HEX VALUE</div>
+          <div class="stat-value" id="rawVal" style="font-size:16px;word-break:break-all;"><span class="skel" style="width:70px;height:28px;"></span></div>
+          <div class="stat-meta">METHOD: 0x88fe2be8</div>
+        </div>
+      </div>
+
+      <!-- Bar: circulating -->
+      <div class="bar-section">
+        <div class="bar-header">
+          <div class="bar-title">DEPOSITED VS CIRCULATING SUPPLY (1.13B)</div>
+          <div class="bar-pct"><span style="color:var(--green);" id="barCircPct">—</span></div>
+        </div>
+        <div class="seg-track" id="segCirc"></div>
+        <div class="bar-legend">
+          <span><span class="legend-sq" style="background:var(--green);"></span>COMMITTED TO FLUX</span>
+          <span><span class="legend-sq" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);"></span>REMAINING CIRCULATING</span>
+        </div>
+      </div>
+
+      <!-- Bar: total supply -->
+      <div class="bar-section">
+        <div class="bar-header">
+          <div class="bar-title">DEPOSITED VS TOTAL SUPPLY (10B)</div>
+          <div class="bar-pct"><span style="color:#3b7bff;" id="barTotalPct">—</span></div>
+        </div>
+        <div class="seg-track" id="segTotal"></div>
+        <div class="bar-legend">
+          <span><span class="legend-sq" style="background:#3b7bff;"></span>COMMITTED TO FLUX</span>
+          <span><span class="legend-sq" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);"></span>REMAINING SUPPLY</span>
+        </div>
+      </div>
+
+      <!-- Contract info -->
+      <div class="frame" style="margin-bottom:0;">
+        <div class="br1"></div><div class="br2"></div>
+        <div class="stat-label" style="margin-bottom:14px;">CONTRACT DETAILS</div>
+        <div class="info-grid">
+          <div class="info-key">CONTRACT</div>
+          <div class="info-val accent">0x42bfAAA203B8259270A1b5EF4576dB6b8359Daa1</div>
+          <div class="info-key">METHOD SIG</div>
+          <div class="info-val">0x88fe2be8</div>
+          <div class="info-key">NETWORK</div>
+          <div class="info-val">MEGAETH MAINNET</div>
+          <div class="info-key">RPC</div>
+          <div class="info-val">carrot.megaeth.com</div>
+          <div class="info-key">TOTAL SUPPLY</div>
+          <div class="info-val">10,000,000,000 $MEGA</div>
+          <div class="info-key">CIRCULATING</div>
+          <div class="info-val">1,130,000,000 (11.3%)</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-row">
+      <div id="lastUpdated">NOT YET LOADED</div>
+      <button class="refresh-btn" id="refreshBtn" onclick="fetchData()">REFRESH ↻</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const RPC      = 'https://carrot.megaeth.com';
+  const CONTRACT = '0x42bfAAA203B8259270A1b5EF4576dB6b8359Daa1';
+  const METHOD   = '0x88fe2be8';
+  const TOTAL    = 10_000_000_000;
+  const CIRC     = TOTAL * 0.113;
+  const SEG_N    = 40;
+
+  function buildSegments(id, color) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = 0; i < SEG_N; i++) {
+      const s = document.createElement('div');
+      s.className = 'seg';
+      s.dataset.color = color;
+      el.appendChild(s);
+    }
+  }
+
+  function fillSegments(id, pct) {
+    const segs  = document.getElementById(id).querySelectorAll('.seg');
+    const color = segs[0].dataset.color;
+    const n     = Math.round((Math.min(pct, 100) / 100) * SEG_N);
+    segs.forEach((s, i) => {
+      setTimeout(() => {
+        s.className = 'seg' + (i < n ? ' filled-' + color : '');
+      }, i * 20);
+    });
+  }
+
+  function setStatus(state, msg) {
+    document.getElementById('statusDot').className = 'status-dot ' + (state === 'ok' ? '' : state);
+    document.getElementById('statusPillText').textContent = state === 'ok' ? 'LIVE' : state === 'error' ? 'ERROR' : 'FETCHING';
+    document.getElementById('statusLine').textContent = msg;
+  }
+
+  function fmt(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(3) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(2);
+  }
+
+  function setEl(id, html) { document.getElementById(id).innerHTML = html; }
+
+  async function fetchData() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    setStatus('loading', 'CALLING ETH_CALL → ' + CONTRACT);
+
+    try {
+      const resp = await fetch(RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 1,
+          method: 'eth_call',
+          params: [{ to: CONTRACT, data: METHOD }, 'latest']
+        })
+      });
+
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      if (json.error) throw new Error(json.error.message || 'RPC ERROR');
+
+      const raw = json.result;
+      if (!raw || raw === '0x') throw new Error('EMPTY RESPONSE FROM CONTRACT');
+
+      const bigVal  = BigInt(raw);
+      const amount  = Number(bigVal / (10n ** 18n)) + Number(bigVal % (10n ** 18n)) / 1e18;
+      const pctCirc  = (amount / CIRC)  * 100;
+      const pctTotal = (amount / TOTAL) * 100;
+
+      setEl('heroNumber', fmt(amount) + '<span class="unit">MEGA</span>');
+      setEl('heroSub', amount.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' $MEGA COMMITTED TO FLUX');
+      setEl('pctCirc',  pctCirc.toFixed(3) + '%');
+      setEl('pctTotal', pctTotal.toFixed(4) + '%');
+      setEl('rawVal',   raw.slice(0, 18) + '...');
+      setEl('barCircPct',  pctCirc.toFixed(2) + '% OF CIRC.');
+      setEl('barTotalPct', pctTotal.toFixed(3) + '% OF TOTAL');
+
+      fillSegments('segCirc',  pctCirc);
+      fillSegments('segTotal', pctTotal);
+
+      setEl('lastUpdated', 'LAST UPDATED: ' + new Date().toLocaleTimeString() + ' // AUTO-REFRESH 30S');
+      setStatus('ok', 'OK // ' + fmt(amount) + ' $MEGA DEPOSITED IN FLUX PROTOCOL');
+
+    } catch (err) {
+      setStatus('error', 'ERROR: ' + err.message);
+      ['heroNumber','pctCirc','pctTotal','rawVal'].forEach(id => setEl(id, 'ERR'));
+      console.error(err);
+    }
+
+    btn.disabled = false;
+  }
+
+  buildSegments('segCirc',  'green');
+  buildSegments('segTotal', 'blue');
+  fetchData();
+  setInterval(fetchData, 30_000);
+</script>
+</body>
+</html>
