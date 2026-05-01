@@ -1,65 +1,42 @@
 export const config = { runtime: 'edge' };
- 
-const ENDPOINTS = [
-  'https://carrot.megaeth.com',
-  'https://mainnet.megaeth.com/rpc',
-  'https://megaeth.drpc.org',
-];
- 
+
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   }
- 
-  const body = await req.text();
-  const errors = [];
- 
-  for (const endpoint of ENDPOINTS) {
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': 'https://flux.megaeth.com',
-          'Referer': 'https://flux.megaeth.com/',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        },
-        body,
-      });
- 
-      const text = await response.text();
- 
-      // If response looks like valid JSON RPC, return it
-      if (text.includes('result') || text.includes('jsonrpc')) {
-        return new Response(text, {
-          status: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json',
-            'X-Used-Endpoint': endpoint,
-          },
-        });
-      }
- 
-      errors.push({ endpoint, status: response.status, body: text.slice(0, 100) });
-    } catch (err) {
-      errors.push({ endpoint, error: err.message });
-    }
+
+  // Use Blockscout's eth_call proxy — open CORS, no IP whitelist
+  const url = `https://megaeth.blockscout.com/api?module=proxy&action=eth_call&to=0x42bfAAA203B8259270A1b5EF4576dB6b8359Daa1&data=0x88fe2be8&tag=latest`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const text = await response.text();
+    return new Response(text, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
- 
-  return new Response(JSON.stringify({ error: 'All endpoints failed', details: errors }), {
-    status: 502,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': 'application/json',
-    },
-  });
 }
- 
