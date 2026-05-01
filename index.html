@@ -632,22 +632,17 @@
   async function fetchData() {
     const btn = document.getElementById('refreshBtn');
     btn.disabled = true;
-    setStatus('loading', 'CALLING ETH_CALL → ' + CONTRACT);
+    setStatus('loading', 'CALLING BLOCKSCOUT API → ' + CONTRACT);
 
     try {
-      const resp = await fetch(RPC, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 1,
-          method: 'eth_call',
-          params: [{ to: CONTRACT, data: METHOD }, 'latest']
-        })
-      });
+      const resp = await fetch('/api/rpc');
 
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const json = await resp.json();
-      if (json.error) throw new Error(json.error.message || 'RPC ERROR');
+
+      // Blockscout returns { status, result } or { error }
+      if (json.error) throw new Error(json.error.message || 'API ERROR');
+      if (json.status === '0') throw new Error(json.result || 'CONTRACT ERROR');
 
       const raw = json.result;
       if (!raw || raw === '0x') throw new Error('EMPTY RESPONSE FROM CONTRACT');
